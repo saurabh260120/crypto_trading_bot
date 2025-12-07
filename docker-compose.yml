@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: trading_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-trading_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trading_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-trading_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trading_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: trading_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: trading_backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-trading_user}:${POSTGRES_PASSWORD:-trading_pass}@postgres:5432/${POSTGRES_DB:-trading_db}
+      - REDIS_URL=redis://redis:6379/0
+      - TRADE_MASTER_KEY=${TRADE_MASTER_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS:-24}
+      - DELTA_SANDBOX_URL=${DELTA_SANDBOX_URL}
+      - DELTA_LIVE_URL=${DELTA_LIVE_URL}
+      - DELTA_WS_SANDBOX_URL=${DELTA_WS_SANDBOX_URL}
+      - DELTA_WS_LIVE_URL=${DELTA_WS_LIVE_URL}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - GLOBAL_KILL_SWITCH=${GLOBAL_KILL_SWITCH:-false}
+    volumes:
+      - ./backend:/app
+      - backend_logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: trading_worker
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-trading_user}:${POSTGRES_PASSWORD:-trading_pass}@postgres:5432/${POSTGRES_DB:-trading_db}
+      - REDIS_URL=redis://redis:6379/0
+      - TRADE_MASTER_KEY=${TRADE_MASTER_KEY}
+      - DELTA_SANDBOX_URL=${DELTA_SANDBOX_URL}
+      - DELTA_LIVE_URL=${DELTA_LIVE_URL}
+      - DELTA_WS_SANDBOX_URL=${DELTA_WS_SANDBOX_URL}
+      - DELTA_WS_LIVE_URL=${DELTA_WS_LIVE_URL}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-4}
+      - WORKER_HEARTBEAT_INTERVAL=${WORKER_HEARTBEAT_INTERVAL:-30}
+      - GLOBAL_KILL_SWITCH=${GLOBAL_KILL_SWITCH:-false}
+      - MAX_DRAWDOWN_PERCENT=${MAX_DRAWDOWN_PERCENT:-20.0}
+      - MAX_POSITION_SIZE=${MAX_POSITION_SIZE:-100000}
+    volumes:
+      - ./backend:/app
+      - worker_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    command: python -m app.workers.main
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trading_frontend
+    environment:
+      - VITE_API_URL=${BACKEND_URL:-http://localhost:8000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_logs:
+  worker_logs:
+

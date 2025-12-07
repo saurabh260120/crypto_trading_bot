@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "email": "user1@example.com",
+      "password": "SecurePass123!",
+      "profiles": [
+        {
+          "name": "User 1 - Sandbox Profile",
+          "environment": "sandbox",
+          "api_key": "sandbox_api_key_1",
+          "api_secret": "sandbox_api_secret_1",
+          "parameters": {
+            "max_trades": 5,
+            "risk_level": "low"
+          }
+        }
+      ]
+    },
+    {
+      "email": "user2@example.com",
+      "password": "SecurePass123!",
+      "profiles": [
+        {
+          "name": "User 2 - Sandbox Profile",
+          "environment": "sandbox",
+          "api_key": "sandbox_api_key_2",
+          "api_secret": "sandbox_api_secret_2",
+          "parameters": {
+            "max_trades": 10,
+            "risk_level": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "email": "user3@example.com",
+      "password": "SecurePass123!",
+      "profiles": [
+        {
+          "name": "User 3 - Sandbox Profile",
+          "environment": "sandbox",
+          "api_key": "sandbox_api_key_3",
+          "api_secret": "sandbox_api_secret_3",
+          "parameters": {
+            "max_trades": 15,
+            "risk_level": "high"
+          }
+        }
+      ]
+    },
+    {
+      "email": "user4@example.com",
+      "password": "SecurePass123!",
+      "profiles": [
+        {
+          "name": "User 4 - Sandbox Profile",
+          "environment": "sandbox",
+          "api_key": "sandbox_api_key_4",
+          "api_secret": "sandbox_api_secret_4",
+          "parameters": {
+            "max_trades": 20,
+            "risk_level": "medium"
+          }
+        }
+      ]
+    }
+  ],
+  "note": "These are example users for testing. Replace API keys with actual Delta Exchange sandbox keys. Change passwords before production use."
+}
+
