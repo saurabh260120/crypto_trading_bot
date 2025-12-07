@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 import base64
 import hashlib
@@ -51,8 +51,8 @@ def decode_access_token(token: str) -> Optional[dict]:
 def get_encryption_key() -> bytes:
     """Derive encryption key from master key."""
     master_key = settings.TRADE_MASTER_KEY.encode()
-    # Use PBKDF2 to derive a 32-byte key
-    kdf = PBKDF2(
+    # Use PBKDF2HMAC to derive a 32-byte key
+    kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=b'trading_platform_salt',  # In production, use a random salt stored securely

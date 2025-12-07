@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     
     # Security
     TRADE_MASTER_KEY: str
-    JWT_SECRET: str
+    JWT_SECRET: str = "supersecretkey123"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 24
     

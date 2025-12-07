@@ -5,7 +5,7 @@ import asyncio
 import logging
 import traceback
 import sys
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
